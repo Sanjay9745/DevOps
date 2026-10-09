@@ -3,7 +3,7 @@ aws_region    = "ap-south-1"
 instance_type = "t3.micro"
 
 # Replace with your existing AWS key pair name
-key_name = "my-ec2-key"
+key_name = "sanjay-aws"
 
 # Replace with your public IP address
-ssh_cidr = "YOUR.PUBLIC.IP.ADDRESS/32"
+ssh_cidr = "13.217.55.233/32"
