@@ -17,6 +17,11 @@ variable "key_name" {
 }
 
 variable "ssh_cidr" {
-  description = "Trusted public IP in CIDR format"
+  description = "External server's trusted public IPv4 address or network in CIDR format"
   type        = string
+
+  validation {
+    condition     = can(cidrnetmask(var.ssh_cidr))
+    error_message = "ssh_cidr must be a valid IPv4 CIDR, such as 203.0.113.10/32."
+  }
 }
