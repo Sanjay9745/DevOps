@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <base href="/app1/" />
+    <title>Orders Console</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/app1/">NORTHSTAR / OPERATIONS</a>
+      <nav aria-label="Applications">
+        <a aria-current="page" href="/app1/">Orders</a
+        ><a href="/app2/">Inventory &rarr;</a>
+      </nav>
+    </header>
+    <main>
+      <p class="eyebrow">APPLICATION 01 <span>DEMO DATA</span></p>
+      <h1>Orders Console</h1>
+      <p class="intro">
+        A clear view of every order, from checkout to doorstep.
+      </p>
+      <section class="metrics" aria-label="Order summary">
+        <article>
+          <p>Total orders</p>
+          <strong>1,284</strong><small>This month</small>
+        </article>
+        <article>
+          <p>Ready to ship</p>
+          <strong>48</strong><small>Awaiting dispatch</small>
+        </article>
+        <article>
+          <p>Fulfillment rate</p>
+          <strong>98.6<span>%</span></strong
+          ><small>On schedule</small>
+        </article>
+      </section>
+      <section class="panel">
+        <div class="panel-heading">
+          <h2>Recent orders</h2>
+          <a href="orders/recent">View orders &rarr;</a>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption class="sr-only">
+              Sample recent orders
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Order</th>
+                <th scope="col">Customer</th>
+                <th scope="col">Amount</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>#ORD-1084</td>
+                <td>Acme Studio</td>
+                <td>$249.00</td>
+                <td><span class="badge">Shipped</span></td>
+              </tr>
+              <tr>
+                <td>#ORD-1083</td>
+                <td>Summit Labs</td>
+                <td>$128.50</td>
+                <td><span class="badge pending">Processing</span></td>
+              </tr>
+              <tr>
+                <td>#ORD-1082</td>
+                <td>Evergreen Co.</td>
+                <td>$576.00</td>
+                <td><span class="badge">Delivered</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <aside>
+        <strong>Connected through Kubernetes</strong>
+        <p>
+          NGINX &middot; ClusterIP &middot; Traefik Ingress &middot; Namespace:
+          demo
+        </p>
+        <code>/app1</code>
+        <p>
+          The View orders link demonstrates a working nested route. All figures
+          are static examples.
+        </p>
+      </aside>
+    </main>
+    <footer>Northstar operations demo / Orders Console</footer>
+  </body>
+</html>

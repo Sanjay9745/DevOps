@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <base href="/app2/" />
+    <title>Inventory Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/app2/">NORTHSTAR / OPERATIONS</a>
+      <nav aria-label="Applications">
+        <a href="/app1/">&larr; Orders</a
+        ><a aria-current="page" href="/app2/">Inventory</a>
+      </nav>
+    </header>
+    <main>
+      <p class="eyebrow">APPLICATION 02 <span>DEMO DATA</span></p>
+      <h1>Inventory Dashboard</h1>
+      <p class="intro">Stock visibility for a well-balanced supply chain.</p>
+      <section class="metrics" aria-label="Inventory summary">
+        <article>
+          <p>Active products</p>
+          <strong>326</strong><small>Across 4 warehouses</small>
+        </article>
+        <article>
+          <p>Units in stock</p>
+          <strong>8,942</strong><small>Available to fulfill</small>
+        </article>
+        <article>
+          <p>Low-stock items</p>
+          <strong>7</strong><small>Replenishment needed</small>
+        </article>
+      </section>
+      <section class="panel">
+        <div class="panel-heading">
+          <h2>Stock overview</h2>
+          <a href="stock/overview">View inventory &rarr;</a>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption class="sr-only">
+              Sample warehouse inventory
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Product / SKU</th>
+                <th scope="col">Warehouse</th>
+                <th scope="col">Available</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Mechanical Keyboard / KB-101</td>
+                <td>East hub</td>
+                <td>248</td>
+                <td><span class="badge">In stock</span></td>
+              </tr>
+              <tr>
+                <td>USB-C Dock / DK-204</td>
+                <td>West hub</td>
+                <td>12</td>
+                <td><span class="badge low">Low stock</span></td>
+              </tr>
+              <tr>
+                <td>Studio Monitor / MN-310</td>
+                <td>Central hub</td>
+                <td>86</td>
+                <td><span class="badge">In stock</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <aside>
+        <strong>Two applications. One entry point.</strong>
+        <p>
+          Separate ConfigMap, Deployment, and Service; shared Traefik
+          controller.
+        </p>
+        <code>/app2</code>
+        <p>
+          The View inventory link demonstrates a working nested route. All
+          figures are static examples.
+        </p>
+      </aside>
+    </main>
+    <footer>Northstar operations demo / Inventory Dashboard</footer>
+  </body>
+</html>
