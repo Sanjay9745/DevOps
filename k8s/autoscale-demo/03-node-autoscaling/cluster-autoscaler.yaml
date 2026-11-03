@@ -1,0 +1,66 @@
+# ==============================================================================
+# LAYER 2 (OPTION A): STANDARD KUBERNETES CLUSTER AUTOSCALER
+# Works with Cloud Node Groups (AWS ASG, GCP MIG, Azure VMSS)
+#
+# HOW IT WORKS:
+# 1. Scale-Out: Watches for Pods in 'Pending' state with event 'Insufficient cpu/memory'.
+#    Calls Cloud Provider API to increase the Auto Scaling Group desired capacity.
+# 2. Scale-In (Cost Saving): When a node's total requested resources fall below
+#    --scale-down-utilization-threshold (e.g., 50%) for 10 minutes, and all its pods
+#    can fit onto other existing nodes, it cordons, drains, and terminates the VM!
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cluster-autoscaler
+  namespace: kube-system
+  labels:
+    app: cluster-autoscaler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cluster-autoscaler
+  template:
+    metadata:
+      labels:
+        app: cluster-autoscaler
+    spec:
+      serviceAccountName: cluster-autoscaler
+      containers:
+        - image: registry.k8s.io/autoscaling/cluster-autoscaler:v1.30.0
+          name: cluster-autoscaler
+          resources:
+            limits:
+              cpu: 100m
+              memory: 600Mi
+            requests:
+              cpu: 100m
+              memory: 600Mi
+          command:
+            - ./cluster-autoscaler
+            - --v=4
+            - --stderrthreshold=info
+            - --cloud-provider=aws
+            - --skip-nodes-with-local-storage=false
+            # Automatically discover node groups tagged for your cluster
+            - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/my-prod-cluster
+            # Pick the node group that wastes the least CPU/RAM after scheduling Pending pods
+            - --expander=least-waste
+            # COST-SAVING FLAGS (Scale-In):
+            - --scale-down-enabled=true
+            - --scale-down-utilization-threshold=0.5  # Terminate nodes < 50% requested capacity
+            - --scale-down-unneeded-time=5m           # Wait 5 mins before terminating idle node
+            - --scale-down-delay-after-add=5m         # Cooldown after spinning up a new node
+            - --balance-similar-node-groups=true
+          env:
+            - name: AWS_REGION
+              value: us-east-1
+          volumeMounts:
+            - name: ssl-certs
+              mountPath: /etc/ssl/certs/ca-certificates.crt
+              readOnly: true
+      volumes:
+        - name: ssl-certs
+          hostPath:
+            path: "/etc/ssl/certs/ca-certificates.crt"

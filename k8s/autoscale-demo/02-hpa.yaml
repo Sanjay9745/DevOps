@@ -1,0 +1,70 @@
+# ==============================================================================
+# LAYER 1 (PART B): HORIZONTAL POD AUTOSCALER (HPA v2)
+# Scales Pods out fast when traffic spikes, scales Pods in slowly to prevent flapping
+# ==============================================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: checkout-api-hpa
+  namespace: autoscale-demo
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: checkout-api
+  minReplicas: 1   # Save money at night/off-peak (use 2 in real prod for High Availability)
+  maxReplicas: 10  # Cap maximum pods to protect downstream databases & cloud budget
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          # Target 50% of requested CPU (50% of 200m = 100m).
+          # Formula: desiredReplicas = ceil[currentReplicas * (currentMetricValue / desiredMetricValue)]
+          averageUtilization: 50
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 75
+  # ----------------------------------------------------------------------------
+  # PRODUCTION TUNING: Asymmetric Scaling Behavior
+  # Scale UP aggressively so users don't get 502/504 timeouts during a flash sale.
+  # Scale DOWN cautiously so brief dips in traffic don't kill warm pods prematurely.
+  # ----------------------------------------------------------------------------
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0 # React immediately to traffic spikes!
+      selectPolicy: Max
+      policies:
+        - type: Percent
+          value: 100          # Allow doubling pods every 15 seconds
+          periodSeconds: 15
+        - type: Pods
+          value: 4            # Or adding up to 4 pods every 15 seconds (whichever is higher)
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 180 # Wait 3 minutes of sustained low load before removing pods
+      selectPolicy: Min
+      policies:
+        - type: Pods
+          value: 1            # Remove at most 1 pod every 60 seconds (graceful scale-in)
+          periodSeconds: 60
+---
+# ==============================================================================
+# POD DISRUPTION BUDGET (PDB)
+# Ensures Cluster Autoscaler / Karpenter never kills all pods at once when
+# draining and terminating an underutilized worker node to save cost!
+# ==============================================================================
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: checkout-api-pdb
+  namespace: autoscale-demo
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: checkout-api

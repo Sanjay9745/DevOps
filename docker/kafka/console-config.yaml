@@ -1,0 +1,6 @@
+kafka:
+  brokers:
+    - "host.docker.internal:9092"
+  sasl:
+    enabled: false
+    impersonateUser: false

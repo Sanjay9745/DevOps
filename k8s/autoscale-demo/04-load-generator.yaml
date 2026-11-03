@@ -1,0 +1,36 @@
+# ==============================================================================
+# TRAFFIC SPIKE SIMULATOR (Flash-Sale Load Generator)
+# Apply this file to flood `checkout-api-svc` with HTTP requests.
+# Watch HPA scale Pods 1 -> 10, and watch Pods go Pending when Node CPU fills up!
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: load-generator
+  namespace: autoscale-demo
+  labels:
+    app: load-generator
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: load-generator
+  template:
+    metadata:
+      labels:
+        app: load-generator
+    spec:
+      containers:
+        - name: busybox-load
+          image: busybox:1.36
+          command:
+            - /bin/sh
+            - -c
+            - "while sleep 0.01; do wget -q -O- http://checkout-api-svc.autoscale-demo.svc.cluster.local; done"
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "200m"
+              memory: "64Mi"

@@ -1,0 +1,59 @@
+# ==============================================================================
+# LAYER 2 (OPTION B): KARPENTER NODEPOOL & EC2NODECLASS (Modern AWS Standard)
+# Instead of rigid Auto Scaling Groups, Karpenter looks at exact Pending pod
+# requests and launches the cheapest matching EC2 Spot/On-Demand instance in ~45s!
+# ==============================================================================
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: cost-optimized-workers
+spec:
+  template:
+    spec:
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default-al2023
+      requirements:
+        # 1. Prioritize Spot Instances for up to 70-90% cost savings, fallback to On-Demand!
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot", "on-demand"]
+        # 2. Allow Karpenter to bin-pack across flexible instance families (c6i, m6i, t3)
+        - key: karpenter.k8s.aws/instance-category
+          operator: In
+          values: ["c", "m", "t"]
+        - key: karpenter.k8s.aws/instance-generation
+          operator: Gt
+          values: ["5"]
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+  # Hard cluster-wide budget ceiling so a runaway loop or DDoS never bankrupts you
+  limits:
+    cpu: "32"
+    memory: 64Gi
+  # ----------------------------------------------------------------------------
+  # AUTOMATIC COST-SAVING CONSOLIDATION (Scale-In)
+  # When HPA deletes pods after the traffic spike ends, Karpenter notices nodes
+  # are underutilized or empty, moves remaining pods onto smaller/fewer nodes,
+  # and terminates the expensive instances automatically!
+  # ----------------------------------------------------------------------------
+  disruption:
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 2m
+---
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: default-al2023
+spec:
+  amiSelectorTerms:
+    - alias: al2023@latest
+  role: "KarpenterNodeRole-my-prod-cluster"
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "my-prod-cluster"
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "my-prod-cluster"

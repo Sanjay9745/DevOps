@@ -1,0 +1,80 @@
+# ==============================================================================
+# LAYER 1: APPLICATION DEPLOYMENT & SERVICE
+# Real-world Scenario: E-Commerce Flash-Sale Checkout API
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout-api
+  namespace: autoscale-demo
+  labels:
+    app: checkout-api
+spec:
+  # NOTE: Do NOT hardcode 'replicas' in production GitOps when using HPA,
+  # or set it only for initial bootstrap so you don't overwrite HPA scaling!
+  replicas: 1
+  selector:
+    matchLabels:
+      app: checkout-api
+  template:
+    metadata:
+      labels:
+        app: checkout-api
+    spec:
+      # Spread pods across different worker nodes for High Availability (HA)
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: checkout-api
+      containers:
+        - name: checkout-api
+          # Official Kubernetes HPA test image that performs CPU-intensive math on request
+          image: registry.k8s.io/hpa-example
+          ports:
+            - containerPort: 80
+              name: http
+          # --------------------------------------------------------------------
+          # CRITICAL FOR BOTH HPA AND NODE AUTOSCALING!
+          # 1. HPA calculates CPU % based on 'requests.cpu':
+          #    Actual CPU Usage / requests.cpu = Utilization %
+          # 2. Cluster Autoscaler / Karpenter provisions new EC2/Cloud VMs
+          #    based on the sum of 'requests' of Pending pods, NOT actual usage!
+          # --------------------------------------------------------------------
+          resources:
+            requests:
+              cpu: "200m"      # 0.2 vCPU guaranteed per Pod
+              memory: "128Mi"  # 128 MB RAM guaranteed per Pod
+            limits:
+              cpu: "500m"      # Max 0.5 vCPU burst per Pod
+              memory: "256Mi"  # Max 256 MB RAM before OOMKill
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: checkout-api-svc
+  namespace: autoscale-demo
+  labels:
+    app: checkout-api
+spec:
+  type: ClusterIP
+  selector:
+    app: checkout-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
